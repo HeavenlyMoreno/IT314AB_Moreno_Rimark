@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'Screens/student_list_screen.dart';
 import 'Screens/student_details_screen.dart';
-import 'Screens/add_student_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +16,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Student Directory',
-
       initialRoute: '/student-list',
 
       onGenerateRoute: (settings) {
@@ -29,7 +27,6 @@ class MyApp extends StatelessWidget {
           );
         }
 
-
         if (settings.name == '/student-details') {
           final student =
           settings.arguments as Map<String, dynamic>;
@@ -39,15 +36,6 @@ class MyApp extends StatelessWidget {
               return StudentDetailsScreen(
                 student: student,
               );
-            },
-          );
-        }
-
-
-        if (settings.name == '/add-student') {
-          return MaterialPageRoute(
-            builder: (context) {
-              return const AddStudentScreen();
             },
           );
         }

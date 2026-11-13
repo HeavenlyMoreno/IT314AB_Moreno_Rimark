@@ -18,15 +18,21 @@ class _StudentDetailsScreenState
 
   void editStudent() {
     TextEditingController nameController =
-    TextEditingController(text: widget.student['name']);
+    TextEditingController(
+      text: widget.student['name']?.toString() ?? '',
+    );
 
     TextEditingController emailController =
-    TextEditingController(text: widget.student['email']);
+    TextEditingController(
+      text: widget.student['email']?.toString() ?? '',
+    );
 
     TextEditingController hobbyController =
-    TextEditingController(text: widget.student['hobby']);
+    TextEditingController(
+      text: widget.student['hobby']?.toString() ?? '',
+    );
 
-    bool editedActive = widget.student['active'];
+    bool editedActive = widget.student['active'] ?? true;
 
     showDialog(
       context: context,
@@ -65,7 +71,6 @@ class _StudentDetailsScreenState
                       title: const Text('Active Status'),
                       value: editedActive,
                       activeColor: Colors.teal,
-
                       onChanged: (value) {
                         setDialogState(() {
                           editedActive = value;
@@ -124,9 +129,43 @@ class _StudentDetailsScreenState
     });
   }
 
+  String getValue(dynamic value) {
+    if (value == null || value.toString().isEmpty) {
+      return 'Not provided';
+    }
+
+    return value.toString();
+  }
+
+  Widget detailRow(String label, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 125,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: Text(getValue(value)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final student = widget.student;
+    final imagePath = student['image'];
 
     return Scaffold(
       appBar: AppBar(
@@ -145,14 +184,22 @@ class _StudentDetailsScreenState
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 Center(
                   child: CircleAvatar(
                     radius: 65,
-                    backgroundImage: AssetImage(
-                      student['image'],
-                    ),
+                    backgroundImage:
+                    imagePath != null &&
+                        imagePath.toString().isNotEmpty
+                        ? AssetImage(imagePath.toString())
+                        : null,
+                    child: imagePath == null ||
+                        imagePath.toString().isEmpty
+                        ? const Icon(
+                      Icons.person,
+                      size: 65,
+                    )
+                        : null,
                   ),
                 ),
 
@@ -160,7 +207,7 @@ class _StudentDetailsScreenState
 
                 Center(
                   child: Text(
-                    student['name'],
+                    getValue(student['name']),
                     style: const TextStyle(
                       fontSize: 24,
                       color: Colors.teal,
@@ -171,14 +218,26 @@ class _StudentDetailsScreenState
 
                 const Divider(height: 30),
 
-                detailRow('Student ID', student['studentId']),
+                detailRow(
+                  'Student ID',
+                  student['studentId'] ?? student['studentID'],
+                ),
+
                 detailRow('Course', student['course']),
-                detailRow('Year Level', student['year'].toString()),
-                detailRow('Age', student['age'].toString()),
+                detailRow('Year Level', student['year']),
+                detailRow('Age', student['age']),
                 detailRow('Birthday', student['bday']),
-                detailRow('Height', '${student['height']} ft'),
+
+                detailRow(
+                  'Height',
+                  student['height'] == null
+                      ? null
+                      : '${student['height']} ft',
+                ),
+
                 detailRow('Hobby', student['hobby']),
                 detailRow('Email', student['email']),
+
                 detailRow(
                   'Favorite Subject',
                   student['favoriteSubject'],
@@ -186,7 +245,9 @@ class _StudentDetailsScreenState
 
                 detailRow(
                   'Status',
-                  student['active'] == true
+                  student['active'] == null
+                      ? 'Not provided'
+                      : student['active'] == true
                       ? 'Active'
                       : 'Inactive',
                 ),
@@ -209,34 +270,6 @@ class _StudentDetailsScreenState
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          SizedBox(
-            width: 125,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-
-          Expanded(
-            child: Text(
-              value.isEmpty ? 'Not provided' : value,
-            ),
-          ),
-        ],
       ),
     );
   }

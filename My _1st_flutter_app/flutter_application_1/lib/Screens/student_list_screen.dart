@@ -1,5 +1,9 @@
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'add_student_screen.dart';
 
 class StudentListScreen extends StatefulWidget {
@@ -13,6 +17,10 @@ class StudentListScreen extends StatefulWidget {
 class _StudentListScreenState extends State<StudentListScreen> {
   bool isLoading = true;
 
+  // Name used to identify the saved student records
+  static const String storageKey = 'student_records';
+
+  // Original student records
   List<Map<String, dynamic>> students = [
     {
       'name': 'Rimark Rafael Moreno',
@@ -121,17 +129,64 @@ class _StudentListScreenState extends State<StudentListScreen> {
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
+  // Save student records locally
+  Future<void> saveStudents() async {
+    final prefs = SharedPreferencesAsync();
 
-    Future.delayed(const Duration(seconds: 3), () {
+    String studentData = jsonEncode(students);
+
+    await prefs.setString(storageKey, studentData);
+  }
+
+  // Load student records when the app starts
+  Future<void> loadStudents() async {
+    final prefs = SharedPreferencesAsync();
+
+    try {
+      String? savedData = await prefs.getString(storageKey);
+
+      if (savedData != null) {
+        List<dynamic> decodedData = jsonDecode(savedData);
+
+        setState(() {
+          students = decodedData
+              .map((student) =>
+          Map<String, dynamic>.from(student))
+              .toList();
+
+          isLoading = false;
+        });
+      } else {
+        // No saved records yet.
+        // Keep and save the original seven students.
+        await saveStudents();
+
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
         isLoading = false;
       });
-    });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not load saved student records.'),
+        ),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadStudents();
   }
 
   String fallback(String? value) {
@@ -142,22 +197,32 @@ class _StudentListScreenState extends State<StudentListScreen> {
     return value;
   }
 
-  void openDetails(Map<String, dynamic> student) {
-    Navigator.pushNamed(
+  // Open Student Details Screen
+  // Save again when returning in case details were edited.
+  Future<void> openDetails(
+      Map<String, dynamic> student) async {
+    await Navigator.pushNamed(
       context,
       '/student-details',
       arguments: student,
-    ).then((value) {
-      if (!mounted) return;
-      setState(() {});
-    });
+    );
+
+    if (!mounted) return;
+
+    setState(() {});
+
+    await saveStudents();
   }
 
+  // Open Add Student Screen
   void openAddStudent() async {
-    final newStudent = await Navigator.push(
+    final newStudent =
+    await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-        builder: (context) => const AddStudentScreen(),
+        builder: (context) => AddStudentScreen(
+          existingStudents: students,
+        ),
       ),
     );
 
@@ -165,8 +230,11 @@ class _StudentListScreenState extends State<StudentListScreen> {
 
     if (newStudent != null) {
       setState(() {
-        students.add(newStudent as Map<String, dynamic>);
+        students.add(newStudent);
       });
+
+      // Save the newly enrolled student
+      await saveStudents();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -178,8 +246,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    students.sort((a, b) =>
-        a['name'].compareTo(b['name']));
+    students.sort(
+          (a, b) => a['name'].compareTo(b['name']),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -214,7 +283,6 @@ class _StudentListScreenState extends State<StudentListScreen> {
           ],
         ),
       )
-
           : students.isEmpty
           ? Center(
         child: Column(
@@ -244,11 +312,9 @@ class _StudentListScreenState extends State<StudentListScreen> {
           ],
         ),
       )
-
           : ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: students.length,
-
         itemBuilder: (context, index) {
           final student = students[index];
 
@@ -256,34 +322,29 @@ class _StudentListScreenState extends State<StudentListScreen> {
             color: student['favorite'] == true
                 ? Colors.amber[50]
                 : Colors.white,
-
             margin: const EdgeInsets.only(
               bottom: 16,
             ),
-
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
               side: const BorderSide(
                 color: Colors.teal,
               ),
             ),
-
             child: Padding(
               padding: const EdgeInsets.all(12),
-
               child: Column(
                 children: [
                   ListTile(
                     onTap: () {
                       openDetails(student);
                     },
-
                     leading: CircleAvatar(
                       radius: 30,
-                      backgroundImage:
-                      AssetImage(student['image']),
+                      backgroundImage: AssetImage(
+                        student['image'],
+                      ),
                     ),
-
                     title: Text(
                       fallback(student['name']),
                       style: const TextStyle(
@@ -291,12 +352,10 @@ class _StudentListScreenState extends State<StudentListScreen> {
                         color: Colors.teal,
                       ),
                     ),
-
                     subtitle: Text(
                       '${student['course']} - Year ${student['year']}\n'
                           '${student['active'] == true ? 'Active' : 'Inactive'}',
                     ),
-
                     trailing: const Icon(
                       Icons.arrow_forward_ios,
                       size: 18,
@@ -306,24 +365,24 @@ class _StudentListScreenState extends State<StudentListScreen> {
                   Row(
                     mainAxisAlignment:
                     MainAxisAlignment.center,
-
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () {
+                        onPressed: () async {
                           setState(() {
                             student['favorite'] =
-                            !student['favorite'];
+                            !(student['favorite'] ??
+                                false);
                           });
-                        },
 
+                          await saveStudents();
+                        },
                         icon: Icon(
-                          student['favorite']
+                          student['favorite'] == true
                               ? Icons.favorite
                               : Icons.favorite_border,
                         ),
-
                         label: Text(
-                          student['favorite']
+                          student['favorite'] == true
                               ? 'Favorited'
                               : 'Favorite',
                         ),
@@ -332,10 +391,14 @@ class _StudentListScreenState extends State<StudentListScreen> {
                       const SizedBox(width: 10),
 
                       ElevatedButton.icon(
-                        onPressed: () {
+                        onPressed: () async {
                           setState(() {
                             students.removeAt(index);
                           });
+
+                          await saveStudents();
+
+                          if (!mounted) return;
 
                           ScaffoldMessenger.of(context)
                               .showSnackBar(
@@ -346,7 +409,6 @@ class _StudentListScreenState extends State<StudentListScreen> {
                             ),
                           );
                         },
-
                         icon: const Icon(Icons.delete),
                         label: const Text('Delete'),
                       ),
