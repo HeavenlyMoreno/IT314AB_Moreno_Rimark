@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -25,6 +26,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
 
+
+  bool isLoading = true;
+
   List<Map<String, dynamic>> students = [
     {
       'name': 'Rimark Rafael Moreno',
@@ -36,7 +40,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'bday': 'April 19, 2004',
       'height': 5.2,
       'active': true,
-      'emo': '😤',
       'studentId': '2024-001',
       'email': 'rimark@gmail.com',
       'favoriteSubject': 'Lunch',
@@ -51,8 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'image': 'assets/mom.jpg',
       'bday': 'May 12, 2004',
       'height': 4.2,
-      'active': true,
-      'emo': '😎',
+      'active': false,
       'studentId': '2024-002',
       'email': 'mannes@gmail.com',
       'favoriteSubject': 'Web Development',
@@ -68,7 +70,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'bday': 'October 8, 2006',
       'height': 4.3,
       'active': true,
-      'emo': '💀',
       'studentId': '2024-003',
       'email': 'johnkevin@gmail.com',
       'favoriteSubject': 'Database',
@@ -84,7 +85,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'bday': 'February 14, 2004',
       'height': 4.7,
       'active': true,
-      'emo': '🎸',
       'studentId': '2024-004',
       'email': 'jamesneil@gmail.com',
       'favoriteSubject': 'Networking',
@@ -100,7 +100,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'bday': 'July 25, 2003',
       'height': 5.4,
       'active': true,
-      'emo': '🎤',
       'studentId': '2024-005',
       'email': 'keith@gmail.com',
       'favoriteSubject': 'Dismisal',
@@ -116,7 +115,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'bday': 'July 25, 2003',
       'height': 5.4,
       'active': true,
-      'emo': '🎥',
       'studentId': '2024-006',
       'email': 'wilken@gmail.com',
       'favoriteSubject': 'Mobile Development',
@@ -132,13 +130,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'bday': 'July 25, 2003',
       'height': 5.4,
       'active': true,
-      'emo': '🎥',
       'studentId': '2024-007',
       'email': 'juswa@gmail.com',
       'favoriteSubject': 'Computer Programming',
       'favorite': false,
     },
   ];
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+    });
+  }
 
   String fallback(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -169,29 +180,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       backgroundColor: Colors.teal[50],
 
-      body: students.isEmpty
+
+      body: isLoading
+
+
           ? const Center(
-        child: Text(
-          'No students found.',
-          style: TextStyle(
-            fontSize: 24,
-            color: Colors.teal,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: Colors.teal,
+            ),
+
+            SizedBox(height: 16),
+
+            Text(
+              'Loading students...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.teal,
+              ),
+            ),
+          ],
         ),
       )
+
+
+          : students.isEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 80,
+              color: Colors.teal,
+            ),
+
+            const SizedBox(height: 16),
+
+            const Text(
+              'No students found',
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.teal,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Your student directory is empty.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      )
+
+
           : ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 30),
 
         itemCount: students.length,
 
         itemBuilder: (context, index) {
-
           final student = students[index];
 
           return Column(
             children: [
-
               buildCard(
                 context,
                 index,
@@ -220,9 +280,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return InkWell(
 
-      // TAP ANYWHERE ON CARD
-      onTap: () {
 
+      onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -230,19 +289,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         );
-
       },
 
       borderRadius: BorderRadius.circular(15),
 
       child: Container(
-
         padding: const EdgeInsets.all(20),
 
         margin: const EdgeInsets.symmetric(horizontal: 30),
 
         decoration: BoxDecoration(
-
           color: isFavorite
               ? Colors.amber[50]
               : Colors.white,
@@ -258,13 +314,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
 
         child: Column(
-
           mainAxisSize: MainAxisSize.min,
 
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-
             Center(
               child: Image.asset(
                 student['image'],
@@ -318,18 +372,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            const SizedBox(height: 14),
-
-            Center(
-              child: Text(
-                student['emo'],
-                style: const TextStyle(
-                  fontSize: 20,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
 
             Text(
               date,
@@ -371,13 +414,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 8),
 
+
             Text(
-              'Student Status: ${student['active'] ? 'Active' : 'Inactive'}',
-              style: const TextStyle(
+              student['active'] == true
+                  ? 'Student Status: Active'
+                  : 'Student Status: Inactive',
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: student['active'] == true
+                    ? Colors.green
+                    : Colors.red,
               ),
             ),
+
+
+            if (student['active'] == false) ...[
+              const SizedBox(height: 8),
+
+              const Text(
+                'INACTIVE STUDENT',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
 
             const SizedBox(height: 8),
 
@@ -411,25 +474,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 20),
 
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
 
               children: [
 
-
                 ElevatedButton.icon(
                   onPressed: () {
-
                     setState(() {
-
                       if (student['favorite'] == true) {
                         student['favorite'] = false;
                       } else {
                         student['favorite'] = true;
                       }
-
                     });
-
                   },
 
                   icon: Icon(
@@ -451,60 +510,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ElevatedButton.icon(
                   onPressed: () {
 
+                    bool editedActive = student['active'] == true;
+
                     showDialog(
                       context: context,
 
                       builder: (context) {
+                        return StatefulBuilder(
+                          builder: (context, setDialogState) {
+                            return AlertDialog(
+                              title: const Text('Edit Student'),
 
-                        return AlertDialog(
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Student: $name'),
 
-                          title: const Text(
-                            'Edit Student',
-                          ),
+                                  const SizedBox(height: 15),
 
-                          content: Text(
-                            'You are editing $name.',
-                          ),
+                                  SwitchListTile(
+                                    title: const Text('Active Status'),
 
-                          actions: [
+                                    value: editedActive,
 
-                            TextButton(
-                              onPressed: () {
+                                    activeColor: Colors.teal,
 
-                                Navigator.pop(context);
-
-                              },
-
-                              child: const Text(
-                                'Close',
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        editedActive = value;
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
-                            ),
 
-                          ],
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+
+                                  child: const Text('Cancel'),
+                                ),
+
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      student['active'] = editedActive;
+                                    });
+
+                                    Navigator.pop(context);
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          '$name updated successfully!',
+                                        ),
+                                      ),
+                                    );
+                                  },
+
+                                  child: const Text('Save'),
+                                ),
+                              ],
+                            );
+                          },
                         );
                       },
                     );
-
                   },
 
-                  icon: const Icon(
-                    Icons.edit,
-                  ),
+                  icon: const Icon(Icons.edit),
 
-                  label: const Text(
-                    'Edit',
-                  ),
+                  label: const Text('Edit'),
                 ),
 
                 const SizedBox(width: 10),
 
+
                 ElevatedButton.icon(
                   onPressed: () {
-
                     setState(() {
-
                       students.removeAt(index);
-
                     });
 
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -514,27 +601,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     );
-
                   },
 
-                  icon: const Icon(
-                    Icons.delete,
-                  ),
+                  icon: const Icon(Icons.delete),
 
-                  label: const Text(
-                    'Delete',
-                  ),
+                  label: const Text('Delete'),
                 ),
               ],
             ),
 
-            if (student['favorite'] == true) ...[
 
+            if (student['favorite'] == true) ...[
               const SizedBox(height: 12),
 
               Center(
                 child: Text(
-                  '⭐ FAVORITE STUDENT',
+                  'FAVORITE STUDENT',
 
                   style: TextStyle(
                     color: Colors.amber[800],
